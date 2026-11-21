@@ -87,6 +87,18 @@ jobs:
           threshold_fixable_only: true
           display_vulnerability_findings: enabled
 
+      - name: Save scan reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: security-reports
+          path: |
+            snyk.json
+            ${{ steps.inspector.outputs.inspector_scan_results }}
+            ${{ steps.inspector.outputs.inspector_scan_results_csv }}
+            ${{ steps.inspector.outputs.artifact_sbom }}
+          if-no-files-found: ignore
+
       # 2. One decision for all three scanners
 
       - name: Policy gate

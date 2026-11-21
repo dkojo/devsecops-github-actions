@@ -1,5 +1,8 @@
 FROM python:3.13-slim
 
+# Apply the latest Debian security fixes to the base image
+RUN apt-get update && apt-get upgrade -y --no-install-recommends && rm -rf /var/lib/apt/lists/*
+
 # Run as a normal user, not root
 RUN useradd --create-home --uid 10001 appuser
 WORKDIR /app
