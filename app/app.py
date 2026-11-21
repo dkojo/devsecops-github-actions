@@ -1,7 +1,15 @@
 """A tiny API, just enough code for the scanners to have something real to check."""
+import os
+import secrets
+
 from flask import Flask, jsonify
+from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
+# Signing key for CSRF tokens: from the environment in production, random per process otherwise
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
+# Every POST, PUT, PATCH and DELETE must carry a valid CSRF token (fixes SonarQube python:S4502)
+csrf = CSRFProtect(app)
 
 ITEMS = [
     {"id": 1, "name": "SonarQube", "checks": "code quality and security hotspots"},

@@ -12,10 +12,12 @@ provider "aws" {
   region = "us-east-1"
 }
 
-variable "github_repo" {
-  description = "owner/name of the GitHub repo allowed to use this role"
+# GitHub's OIDC subject for this repo, in its immutable form (owner and repo with their numeric IDs).
+# Find yours with: gh api repos/OWNER/REPO/actions/oidc/customization/sub --jq .sub_claim_prefix
+variable "github_sub_prefix" {
+  description = "sub_claim_prefix of the GitHub repo allowed to use this role"
   type        = string
-  default     = "dkojo/devsecops-github-actions"
+  default     = "repo:dkojo@167027053/devsecops-github-actions@1466137351"
 }
 
 # The GitHub OIDC provider already exists in the account (created for project 1)
@@ -39,7 +41,7 @@ data "aws_iam_policy_document" "trust" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repo}:ref:refs/heads/main", "repo:${var.github_repo}:pull_request"]
+      values   = ["${var.github_sub_prefix}:ref:refs/heads/main", "${var.github_sub_prefix}:pull_request"]
     }
   }
 }

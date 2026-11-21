@@ -41,7 +41,8 @@ Pull requests run steps 1 to 7, so problems show up as a failed check before mer
 
 | Path | What it is |
 |---|---|
-| `app/` | A tiny Flask API and its tests, just enough code to scan |
+| `app/` | A tiny Flask API (with CSRF protection) and its tests, just enough code to scan |
+| `app/requirements*.in` → `.txt` | Direct dependencies, locked with `pip-compile --generate-hashes`. Installs are wheels-only and hash-checked |
 | `Dockerfile` | Slim Python image that runs as a non-root user |
 | `.github/workflows/devsecops.yml` | The pipeline |
 | `scripts/policy_gate.py` | The policy gate: one place for the rules |
@@ -52,7 +53,11 @@ Pull requests run steps 1 to 7, so problems show up as a failed check before mer
 
 You need free accounts on [SonarQube Cloud](https://sonarcloud.io) and [Snyk](https://snyk.io), plus an AWS account.
 
-**1. Fork or copy this repo**, and change `dkojo` to your GitHub user in `sonar-project.properties` and `infra/main.tf`.
+**1. Fork or copy this repo.** Put your SonarQube organization in `sonar-project.properties`, and your repo's OIDC subject in `github_sub_prefix` in `infra/main.tf`:
+
+```bash
+gh api repos/OWNER/REPO/actions/oidc/customization/sub --jq .sub_claim_prefix
+```
 
 **2. Create the AWS role** (it needs the GitHub OIDC provider in your account; [create one](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws) first if you don't have it):
 
@@ -84,12 +89,19 @@ Add a library with known vulnerabilities on a branch and open a pull request:
 
 ```bash
 git switch -c demo/vulnerable-dependency
-echo "requests==2.19.0" >> app/requirements.txt
+cd app
+echo "requests==2.19.0" >> requirements.in      # an old version with known CVEs
+pip-compile --generate-hashes --strip-extras requirements.in -o requirements.txt
+pip-compile --generate-hashes --strip-extras requirements-dev.in -o requirements-dev.txt
 git commit -am "Add an old requests version"
 git push -u origin demo/vulnerable-dependency
 ```
 
 Snyk reports the issues, the policy gate fails, and the pull request check turns red. Nothing is deployed.
+
+## What the first run found
+
+The very first run failed the SonarQube quality gate, which is the point of the pipeline. It flagged a Flask app with no CSRF protection, and `pip install` commands that could run setup scripts and weren't pinned to hashes. The fixes are in the commit after it: `Flask-WTF` CSRF protection, and dependencies locked with hashes and installed as wheels only.
 
 ## Cost
 

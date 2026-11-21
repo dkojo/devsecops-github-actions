@@ -36,7 +36,7 @@ jobs:
 
       - name: Unit tests
         run: |
-          pip install -r app/requirements-dev.txt
+          pip install --only-binary :all: --require-hashes -r app/requirements-dev.txt
           pytest app --cov=app --cov-report=xml:coverage.xml
 
       # 1. The three scanners. Each one reports; none of them blocks on its own.

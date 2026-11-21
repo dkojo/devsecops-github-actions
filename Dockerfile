@@ -5,7 +5,8 @@ RUN useradd --create-home --uid 10001 appuser
 WORKDIR /app
 
 COPY app/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Wheels only (no setup scripts run) and every package checked against its locked hash
+RUN pip install --no-cache-dir --only-binary :all: --require-hashes -r requirements.txt
 
 COPY app/app.py .
 USER appuser
