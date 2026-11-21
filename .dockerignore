@@ -1,0 +1,7 @@
+.git
+.github
+infra
+scripts
+app/test_app.py
+app/requirements-dev.txt
+**/__pycache__
